@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+
+# Ignore path
+build/win/.vs/*
+build/win/x64/*
