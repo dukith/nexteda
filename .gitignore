@@ -34,3 +34,6 @@
 # Ignore path
 build/win/.vs/*
 build/win/x64/*
+build/win/Debug/*
+build/win/Release/*
+build/win/sample.vcxproj.user
