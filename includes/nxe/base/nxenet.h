@@ -28,6 +28,14 @@ public:
 	//! Get name
 	virtual const char* GetName() const = 0;
 
+	/**
+	 * \brief Compare two nets
+	 *
+	 * \return 1 If this == pSrc
+	 * \return 0 If else
+	 */
+	virtual int operator == (const nxeNet& pSrc) const = 0;
+
 };
 
 #endif /* #ifndef LnxeNET_H_ */

@@ -19,6 +19,7 @@
 #include "nxe/tools/pspice/nxepspcobject.h"
 
 class nxePSpcModel;
+class nxeStringList;
 
 class DLLDECL nxePSpcElement : public nxePSpcObject {
 public:
@@ -48,6 +49,9 @@ public:
 	 * \exception lstdInvalidIndexException
 	 */
 	virtual const char* GetNodeName(const size_t& pIndex = 0) const = 0;
+
+	//! Node name list
+	virtual const nxeStringList& GetNodeNameList() const = 0;
 
 };
 

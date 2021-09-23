@@ -17,12 +17,11 @@
 #include "schematiclistener.h"
 
 
-void GetAppPath(const char* pExecFilePath, char*& pAppPath);
 UserCommandType ReadCommand();
 void TrainingSchematic(nxeSchDesigner& pDesigner);
-void ExecuteQuerySchematic(nxeSchDesigner& pDesigner, SchematicListener& pListner);
+void AnalyzeCircuit(nxeSchDesigner& pDesigner, SchematicListener& pListner);
 void CheckCircuit(nxeSchDesigner& pDesigner, SchematicListener& pListner);
-void PredictConnection(nxeSchDesigner& pDesigner, SchematicListener& pListner);
+void ListModel(nxeSchDesigner& pDesigner);
 void ConfirmToContinue();
 
 int main(int argc, char ** argv) {
@@ -31,26 +30,15 @@ int main(int argc, char ** argv) {
 		return 0;
 	}
 
-	char* exec_path = argv[0];
-	char* apppath = NULL;
-	GetAppPath(exec_path, apppath);
-
 	// Initialize designer
 	char* ctrlfile = argv[argc - 1];
 	try {
-		nxeAPI::Start(apppath, ctrlfile);
+		printf("Initializing...\n");
+		nxeAPI::Start(ctrlfile);
 	}
 	catch (nxeException& e) {
 		printf("%s\n", e.what());
-		if (apppath != NULL) {
-			delete apppath;
-		}
 		return 0;
-	}
-
-	if (apppath != NULL) {
-		delete apppath;
-		apppath = NULL;
 	}
 
 	nxeSchDesigner* designer = nxeAPI::GetSchDesigner();
@@ -62,27 +50,17 @@ int main(int argc, char ** argv) {
 		cmdtype = ReadCommand();
 		try {
 			switch (cmdtype) {
-			case L_UserCommand_TrainingSchHSpice:
+			case L_UserCommand_TrainingSchPSpice:
 				TrainingSchematic(*designer);
 				break;
-			case L_UserCommand_TrainingSchDriver:
-				break;
-			case L_UserCommand_TrainingLayoutDriver:
-				break;
-			case L_UserCommand_SolvePredictConn:
-				PredictConnection(*designer, listener);
-				break;
-			case L_UserCommand_SolveCheckSCH:
+			case L_UserCommand_SolveCheckCircuit:
 				CheckCircuit(*designer, listener);
 				break;
-			case L_UserCommand_SolveFindPattern:
-				ExecuteQuerySchematic(*designer, listener);
+			case L_UserCommand_AnalyzeCircuit:
+				AnalyzeCircuit(*designer, listener);
 				break;
-			case L_UserCommand_SolveGenFpl:
-				break;
-			case L_UserCommand_SolveDesignPlace:
-				break;
-			case L_UserCommand_SolveDesignLayout:
+			case L_UserCommand_KHDBListModel:
+				ListModel(*designer);
 				break;
 			case L_UserCommand_Quit:
 				break;
@@ -106,41 +84,25 @@ UserCommandType ReadCommand() {
 	nxeAPI::GetUtil()->ClearConsole();
 
 	char cmd[10];
-	printf(L_CommandHint);
-	M_SCANF("%s", cmd, 10);
+	printf(L_CommandHint, nxeAPI::GetVersionText());
+	fgets(cmd, 10, stdin);
 
 	nxeUtil* util = nxeAPI::GetUtil();
 
-	char* p_cmd = cmd;
-	util->TrimString(cmd, p_cmd);
-	util->ToUpper(cmd, p_cmd);
+	util->TrimString(cmd);
+	util->ToUpper(cmd);
 
-	if (util->CompareStr(cmd, L_USRCMD_TRAINING_SCH_HSPICE) == 0) {
-		return L_UserCommand_TrainingSchHSpice;
+	if (util->CompareStr(cmd, L_USRCMD_TRAINING_SCH_PSPICE) == 0) {
+		return L_UserCommand_TrainingSchPSpice;
 	}
-	else if (util->CompareStr(cmd, L_USRCMD_TRAINING_SCH_DRIVER) == 0) {
-		return L_UserCommand_TrainingSchDriver;
+	else if (util->CompareStr(cmd, L_USRCMD_SOLVE_CHECKCIRCUIT) == 0) {
+		return L_UserCommand_SolveCheckCircuit;
 	}
-	else if (util->CompareStr(cmd, L_USRCMD_TRAINING_LAYOUT_DRIVER) == 0) {
-		return L_UserCommand_TrainingLayoutDriver;
+	else if (util->CompareStr(cmd, L_USRCMD_SOLVE_ANALYZECIRCUIT) == 0) {
+		return L_UserCommand_AnalyzeCircuit;
 	}
-	else if (util->CompareStr(cmd, L_USRCMD_SOLVE_PREDICT_CONN) == 0) {
-		return L_UserCommand_SolvePredictConn;
-	}
-	else if (util->CompareStr(cmd, L_USRCMD_SOLVE_CHECK_SCH) == 0) {
-		return L_UserCommand_SolveCheckSCH;
-	}
-	else if (util->CompareStr(cmd, L_USRCMD_SOLVE_FIND_PATTERN) == 0) {
-		return L_UserCommand_SolveFindPattern;
-	}
-	else if (util->CompareStr(cmd, L_USRCMD_SOLVE_GEN_FPL) == 0) {
-		return L_UserCommand_SolveGenFpl;
-	}
-	else if (util->CompareStr(cmd, L_USRCMD_SOLVE_DESGIN_PLACE) == 0) {
-		return L_UserCommand_SolveDesignPlace;
-	}
-	else if (util->CompareStr(cmd, L_USRCMD_SOLVE_DESGIN_LAYOUT) == 0) {
-		return L_UserCommand_SolveDesignLayout;
+	else if (util->CompareStr(cmd, L_USRCMD_KHDB_LISTMODEL) == 0) {
+		return L_UserCommand_KHDBListModel;
 	}
 	else if (util->CompareStr(cmd, L_USRCMD_QUIT) == 0) {
 		return L_UserCommand_Quit;
@@ -154,73 +116,137 @@ UserCommandType ReadCommand() {
 }
 
 void TrainingSchematic(nxeSchDesigner& pDesigner) {
-	char buffer[Lnxe_PATH_MAXLEN];
+	nxeUtil* util = nxeAPI::GetUtil();
 
-	printf("Input spice file(full path): ");
-	M_SCANF("%s", buffer, Lnxe_PATH_MAXLEN);
+	char filepath[Lnxe_PATH_MAXLEN];
+	printf("Enter netlist file(PSpice): ");
+	fgets(filepath, Lnxe_PATH_MAXLEN, stdin);
+	util->TrimString(filepath);
+
+	char libnm[Lnxe_PATH_MAXLEN];
+	printf("Enter library name (Optional. Default=lib): ");
+	fgets(libnm, Lnxe_PATH_MAXLEN, stdin);
+	util->TrimString(libnm);
+	if (M_STRLEN(libnm) == 0) {
+		M_MEMCPY(libnm, "lib", 3);
+		libnm[3] = '\0';
+	}
+
+	char cellnm[Lnxe_PATH_MAXLEN];
+	while (1) {
+		printf("Enter cell name (Required): ");
+		fgets(cellnm, Lnxe_PATH_MAXLEN, stdin);
+		util->TrimString(cellnm);
+		if (M_STRLEN(cellnm) > 0) {
+			break;
+		}
+	}
+
+	char viewnm[Lnxe_PATH_MAXLEN];
+	printf("Enter view name (Optional. Default=symbol): ");
+	fgets(viewnm, Lnxe_PATH_MAXLEN, stdin);
+	util->TrimString(viewnm);
+	if (M_STRLEN(viewnm) == 0) {
+		M_MEMCPY(viewnm, "symbol", 6);
+		viewnm[6] = '\0';
+	}
 
 	// Load spice file
 	nxeCircuit& circuit = pDesigner.GetCircuit();
-	circuit.Init("lib", "cell", "symbol");
+	circuit.Init(libnm, cellnm, viewnm);
 	SchematicAdapter schloader(&circuit);
-	schloader.Load(buffer);
+	schloader.Load(filepath);
 
 	// Learn
+	printf("Executing....\n");
 	pDesigner.LearnShematic();
 
 	ConfirmToContinue();
 }
 
-void ExecuteQuerySchematic(nxeSchDesigner& pDesigner, SchematicListener& pListner) {
-	char buffer[Lnxe_PATH_MAXLEN];
+void AnalyzeCircuit(nxeSchDesigner& pDesigner, SchematicListener& pListner) {
+	nxeUtil* util = nxeAPI::GetUtil();
 
-	printf("Input spice file(full path): ");
-	M_SCANF("%s", buffer, Lnxe_PATH_MAXLEN);
+	char filepath[Lnxe_PATH_MAXLEN];
+	printf("Enter netlist file(PSpice): ");
+	fgets(filepath, Lnxe_PATH_MAXLEN, stdin);
+	util->TrimString(filepath);
+
+	char libnm[Lnxe_PATH_MAXLEN];
+	printf("Enter library name (Optional. Default=lib): ");
+	fgets(libnm, Lnxe_PATH_MAXLEN, stdin);
+	util->TrimString(libnm);
+	if (M_STRLEN(libnm) == 0) {
+		M_MEMCPY(libnm, "lib", 3);
+		libnm[3] = '\0';
+	}
+
+	char cellnm[Lnxe_PATH_MAXLEN];
+	while (1) {
+		printf("Enter cell name (Required): ");
+		fgets(cellnm, Lnxe_PATH_MAXLEN, stdin);
+		util->TrimString(cellnm);
+		if (M_STRLEN(cellnm) > 0) {
+			break;
+		}
+	}
+
+	char viewnm[Lnxe_PATH_MAXLEN];
+	printf("Enter view name (Optional. Default=symbol): ");
+	fgets(viewnm, Lnxe_PATH_MAXLEN, stdin);
+	util->TrimString(viewnm);
+	if (M_STRLEN(viewnm) == 0) {
+		M_MEMCPY(viewnm, "symbol", 6);
+		viewnm[6] = '\0';
+	}
 
 	// Load spice file
 	nxeCircuit& circuit = pDesigner.GetCircuit();
-	circuit.Init("lib", "cell", "symbol");
+	circuit.Init(libnm, cellnm, viewnm);
 	SchematicAdapter schloader(&circuit);
-	schloader.Load(buffer);
+	schloader.Load(filepath);
 
 	// Solve
+	printf("Executing....\n");
 	pDesigner.FindPattern(&pListner);
 
 	ConfirmToContinue();
 }
 
-void PredictConnection(nxeSchDesigner& pDesigner, SchematicListener& pListner) {
-	char buffer[Lnxe_PATH_MAXLEN];
+void CheckCircuit(nxeSchDesigner& pDesigner, SchematicListener& pListner) {
+	nxeUtil* util = nxeAPI::GetUtil();
 
-	printf("Input spice file(full path): ");
-	M_SCANF("%s", buffer, Lnxe_PATH_MAXLEN);
+	char filepath[Lnxe_PATH_MAXLEN];
+	printf("Enter netlist file(PSpice): ");
+	fgets(filepath, Lnxe_PATH_MAXLEN, stdin);
+	util->TrimString(filepath);
 
 	// Load spice file
 	nxeCircuit& circuit = pDesigner.GetCircuit();
 	circuit.Init("lib", "cell", "symbol");
 	SchematicAdapter schloader(&circuit);
-	schloader.Load(buffer);
+	schloader.Load(filepath);
 
 	// Solve
-	pDesigner.PredictConnection(NULL, NULL, &pListner);
+	printf("Executing....\n");
+	pDesigner.CheckCircuit(&pListner);
 
 	ConfirmToContinue();
 }
 
-void CheckCircuit(nxeSchDesigner& pDesigner, SchematicListener& pListner) {
-	char buffer[Lnxe_PATH_MAXLEN];
+void ListModel(nxeSchDesigner& pDesigner) {
+	printf("No.\tModel name\t\t\tType\t\t\tDescription\n");
 
-	printf("Input spice file(full path): ");
-	M_SCANF("%s", buffer, Lnxe_PATH_MAXLEN);
-
-	// Load spice file
-	nxeCircuit& circuit = pDesigner.GetCircuit();
-	circuit.Init("lib", "cell", "symbol");
-	SchematicAdapter schloader(&circuit);
-	schloader.Load(buffer);
-
-	// Solve
-	pDesigner.CheckCircuit(&pListner);
+	nxeKHModelBrowser& model_browser = pDesigner.GetKHModelBrowser();
+	nxeKHModelIterator* model_itr = model_browser.Iterator();
+	int cnt = 0;
+	while (++(*model_itr)) {
+		const nxeKHModel* model = model_itr->Get();
+		const char* model_name = model->GetName();
+		const char* type_name = (model->GetType() == LnxeKHModelType_DefinedPattern) ? "Defined-Pattern" : "Cell";
+		const char* desc = model->GetDescription();
+		printf("%d\t%.15s\t\t\t%.15s\t\t%.40s\n", (++ cnt), model_name, type_name, desc);
+	}
 
 	ConfirmToContinue();
 }
@@ -229,21 +255,5 @@ void ConfirmToContinue() {
 	char dummy[Lnxe_PATH_MAXLEN];
 	printf("Press any key to continue!");
 	fgets(dummy, Lnxe_PATH_MAXLEN, stdin);
-	getchar();
-}
-
-void GetAppPath(const char* pExecFilePath, char*& pAppPath) {
-	const char* chr1 = strrchr(pExecFilePath, '\\');
-	const char* chr2 = strrchr(pExecFilePath, '/');
-	const char* slash_chr = (chr1 < chr2) ? chr2 : chr1;
-
-	int path_len = (slash_chr - pExecFilePath);
-	pAppPath = new char[path_len + 1];
-
-#ifdef L_WINDOWS_OS_
-	strncpy_s(pAppPath, path_len + 1, pExecFilePath, path_len);
-#else
-	strncpy(pAppPath, pExecFilePath, path_len);
-#endif
 }
 

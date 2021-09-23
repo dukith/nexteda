@@ -29,6 +29,14 @@ public:
 	//! Destructor
 	virtual ~nxeInstance() {};
 
+	/**
+	 * \brief Compare two instances
+	 *
+	 * \return 1 If this == pSrc
+	 * \return 0 If else
+	 */
+	virtual int operator == (const nxeInstance& pSrc) const = 0;
+
 	//! Block
 	virtual nxeBlock* GetBlock() const = 0;
 
@@ -37,6 +45,9 @@ public:
 
 	//! Instance's name
 	virtual const char* GetName() const = 0;
+
+	//! Get pin by name
+	virtual nxePin* CreatePin(const char* pPinName) = 0;
 
 	//! Get pin by name
 	virtual nxePin* GetPinByName(const char* pPinName) = 0;

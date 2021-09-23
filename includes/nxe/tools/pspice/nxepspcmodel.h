@@ -18,7 +18,7 @@
 #include "nxe/base/nxedef.h"
 #include "nxe/tools/pspice/nxepspcobject.h"
 
-class nxeStringSet;
+class nxeStringList;
 class nxePSpcModelSet;
 class nxePSpcElementSet;
 class nxePSpcCommandSet;
@@ -38,7 +38,7 @@ public:
 	virtual const nxeDeviceType& GetDeviceType() const = 0;
 
 	//! Port list
-	virtual const nxeStringSet& GetPortNameSet() const = 0;
+	virtual const nxeStringList& GetPortNameList() const = 0;
 
 	//! Elements list
 	virtual const nxePSpcElementSet& GetElementSet() const = 0;

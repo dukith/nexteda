@@ -16,7 +16,7 @@
 
 #include "sampledef.h"
 
-class SchematicListener : public nxeIFindPatternListener, public nxeICheckCircuitListener, public nxeIPredictConnectionListener {
+class SchematicListener : public nxeIFindPatternListener, public nxeICheckCircuitListener {
 public:
 	//! Constructor
 	SchematicListener();
@@ -28,20 +28,25 @@ public:
 	void OnFoundPattern(const nxeMatchingPattern& pPattern);
 
 	/*!
-	 * \brief Append pair
+	 * \brief If circuit is no problem then this event will be activated (Can be multiple times)
 	 *
-	 * \param pCurrConnList (o) Pairs of pins in current connection that maybe mistake
-	 * \param pSuggestConnList (o) Solution to fix mistake in pCurrConnList
+	 * \param pPattern (o) Found matching pattern
 	 */
-	void OnSuggestFix(const nxePinPairList& pCurrConnList, const nxePinPairList& pSuggestConnList);
-	
+	void OnMatch(const nxeMatchingPattern& pPattern);
+
 	/*!
 	 * \brief Append pair
 	 *
-	 * \param pCurrConnList (o) Pairs of pins in current connection that maybe mistake
-	 * \param pSuggestConnList (o) Solution to fix mistake in pCurrConnList
+	 * \param pFixSolution (o) Fix solution
 	 */
-	void OnSuggestConnection(const nxePinPairList& pSuggestConnList);
+	void OnSuggestFix(const nxeSchFixSolution& pFixSolution);
+
+	/**
+	 * \brief The event activated in case of being not enough data to evaluate input
+	 *
+	 */
+	void OnNotEnoughDataToEvaluate();
+
 	
 protected:
 	//! Print matching instances

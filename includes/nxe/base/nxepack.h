@@ -14,6 +14,7 @@
 #ifndef Lnxe_PACK_H_
 #define Lnxe_PACK_H_
 
+#include "nxestringlist.h"
 #include "nxestringset.h"
 #include "nxematchingpattern.h"
 #include "nxedesigner.h"
@@ -30,6 +31,11 @@
 #include "nxepinedgelist.h"
 #include "nxecellset.h"
 #include "nxeknowhowhub.h"
+#include "nxengpin.h"
+#include "nxenginstance.h"
+#include "nxekhmodel.h"
+#include "nxekhmodelbrowser.h"
+#include "nxeversion.h"
 
 
 #endif /* #ifndef Lnxe_PACK_H_ */

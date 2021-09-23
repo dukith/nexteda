@@ -16,8 +16,8 @@
 
 #include "nxedef.h"
 
-class nxeCircuit;
 class nxeKnowHowHub;
+class nxeKHModelBrowser;
 
 class DLLDECL nxeDesigner
 {
@@ -31,11 +31,11 @@ public:
 	//! Init
 	virtual void Init() = 0;
 
-	//! Circuit
-	virtual const nxeCircuit& GetCircuit() const = 0;
+	//! Get know-how browser
+	virtual nxeKHModelBrowser& GetKHModelBrowser() = 0;
 
-	//! Circuit
-	virtual nxeCircuit& GetCircuit() = 0;
+	//! Get know-how browser
+	virtual const nxeKHModelBrowser& GetKHModelBrowser() const = 0;
 
 	//! Get know-how hub
 	virtual nxeKnowHowHub& GetKnowHowHub() = 0;

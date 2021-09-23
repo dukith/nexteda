@@ -35,10 +35,10 @@ protected:
 	void CreateCell(nxePSpcModel* pModel);
 
 	//! Create device
-	void CreateDevice(const nxePSpcElement* pElement);
+	void CreateDevice(nxeBlock* pBlock, const nxePSpcElement* pElement);
 
 	//! Create block
-	void CreateBlock(const nxePSpcElement* pElement);
+	void CreateBlock(nxeBlock* pBlock, const nxePSpcElement* pElement);
 
 private:
 	//! Circuit

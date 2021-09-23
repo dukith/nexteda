@@ -30,7 +30,7 @@ public:
 	virtual ~nxeKnowHowHub() {};
 
 	//! Init
-	virtual nxeCell* GetCell(const char* pCellName) const = 0;
+	virtual nxeCell* GetSchCell(const char* pCellName) const = 0;
 
 	//! Get designer
 	virtual nxeDesigner& GetDesigner() const = 0;

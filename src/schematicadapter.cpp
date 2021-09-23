@@ -41,6 +41,7 @@ void SchematicAdapter::Load(const char* pSpcfile) {
 		return;
 	}
 
+	mCircuit->SetDescription(spcloader->GetTitle());
 	CreateCircuit(model);
 
 	delete spcloader;
@@ -67,6 +68,7 @@ void SchematicAdapter::CreateCircuit(const nxePSpcModel* pModel) {
 	delete subckt_itr;
 
 	// Element
+	nxeBlock* topcell = mCircuit->GetTopCell();
 	const nxePSpcElementSet& element_set = pModel->GetElementSet();
 	nxePSpcElementSetIterator* element_itr = element_set.Iterator();
 	while (++ (*element_itr)) {
@@ -74,11 +76,11 @@ void SchematicAdapter::CreateCircuit(const nxePSpcModel* pModel) {
 		nxeModelType model_type = obj->GetModelType();
 		switch (model_type) {
 		case LnxeModelType_Block:
-			CreateBlock(obj);
+			CreateBlock(topcell, obj);
 			break;
 
 		case LnxeModelType_Device:
-			CreateDevice(obj);
+			CreateDevice(topcell, obj);
 			break;
 		}
 	}
@@ -89,8 +91,8 @@ void SchematicAdapter::CreateCircuit(const nxePSpcModel* pModel) {
 void SchematicAdapter::CreateCell(nxePSpcModel* pModel) {
 	nxeCell* topcell = mCircuit->GetTopCell();
 	nxeCell* cell = mCircuit->CreateCell(topcell->GetLibName(), pModel->GetName(), topcell->GetViewName(), pModel->GetModelType(), pModel->GetDeviceType());
-	const nxeStringSet& portnm_set = pModel->GetPortNameSet();
-	nxeStringSetIterator* portnm_itr = portnm_set.Iterator();
+	const nxeStringList& portnm_list = pModel->GetPortNameList();
+	nxeStringListIterator* portnm_itr = portnm_list.Iterator();
 	while (++ (*portnm_itr)) {
 		cell->CreatePort(portnm_itr->Get());
 	}
@@ -98,7 +100,7 @@ void SchematicAdapter::CreateCell(nxePSpcModel* pModel) {
 }
 
 // Create device
-void SchematicAdapter::CreateDevice(const nxePSpcElement* pElement) {
+void SchematicAdapter::CreateDevice(nxeBlock* pBlock, const nxePSpcElement* pElement) {
 	nxeDeviceType device_type = pElement->GetDeviceType();
 	if (device_type == LnxeDeviceType_None) {
 		printf("Unknown device. (%s)\n", pElement->GetName());
@@ -111,8 +113,7 @@ void SchematicAdapter::CreateDevice(const nxePSpcElement* pElement) {
 		return;
 	}
 
-	nxeBlock* topcell = mCircuit->GetTopCell();
-	nxeCell* cell = mCircuit->GetCellByName(topcell->GetLibName(), model->GetName(), topcell->GetViewName());
+	nxeCell* cell = mCircuit->GetCellByName(pBlock->GetLibName(), model->GetName(), pBlock->GetViewName());
 	if (cell == NULL) {
 		printf("The device's model is not defined. (%s)\n", pElement->GetName());
 		return;
@@ -125,20 +126,27 @@ void SchematicAdapter::CreateDevice(const nxePSpcElement* pElement) {
 	const char* netnm4;
 	switch (device_type) {
 	case LnxeDeviceType_Resistor:
-		netnm1 = pElement->GetNodeName(0);
-		netnm2 = pElement->GetNodeName(1);
-		topcell->AddResistor(insname, cell, netnm1, netnm2);
+		netnm1 = pElement->GetNodeName(0); // Plus
+		netnm2 = pElement->GetNodeName(1); // Minus
+		pBlock->AddResistor(insname, cell, netnm1, netnm2);
 		break;
 	case LnxeDeviceType_Capacitor:
 	case LnxeDeviceType_Inductor:
-		netnm1 = pElement->GetNodeName(0);
-		netnm2 = pElement->GetNodeName(1);
-		topcell->AddCapacitor(insname, cell, netnm1, netnm2);
+		netnm1 = pElement->GetNodeName(0); // Plus
+		netnm2 = pElement->GetNodeName(1); // Minus
+		pBlock->AddCapacitor(insname, cell, netnm1, netnm2);
 		break;
 	case LnxeDeviceType_Diode:
+		netnm1 = pElement->GetNodeName(0); // Plus
+		netnm2 = pElement->GetNodeName(1); // Minus
+		pBlock->AddDiode(insname, cell, netnm1, netnm2);
 		break;
 	case LnxeDeviceType_NPN:
 	case LnxeDeviceType_PNP:
+		netnm1 = pElement->GetNodeName(0); // Collector
+		netnm2 = pElement->GetNodeName(1); // Base
+		netnm3 = pElement->GetNodeName(2); // Emitter
+		pBlock->AddBJT(insname, cell, netnm2, netnm3, netnm1);
 		break;
 	case LnxeDeviceType_PMOS:
 	case LnxeDeviceType_NMOS:
@@ -146,14 +154,43 @@ void SchematicAdapter::CreateDevice(const nxePSpcElement* pElement) {
 		netnm2 = pElement->GetNodeName(1); // Gate 
 		netnm3 = pElement->GetNodeName(2); // Source
 		netnm4 = pElement->GetNodeName(3); // Bulk
-		topcell->AddMOS(insname, cell, netnm2, netnm3, netnm1, netnm4);
+		pBlock->AddMOS(insname, cell, netnm2, netnm3, netnm1, netnm4);
 		break;
 	}
 }
 
 // Create block
-void SchematicAdapter::CreateBlock(const nxePSpcElement* pElement) {
+void SchematicAdapter::CreateBlock(nxeBlock* pBlock, const nxePSpcElement* pElement) {
+	nxePSpcModel* model = pElement->GetModel();
+	const char* model_name = model->GetName();
+	const char* lib_name = pBlock->GetLibName();
+	const char* view_name = pBlock->GetViewName();
+	nxeCell* cell = mCircuit->GetCellByName(lib_name, model_name, view_name);
+	if (NULL == cell) {
+		printf("The cell '%s/%s/%s' not defined", lib_name, model_name, view_name);
+		return;
+	}
 
+	const char* inst_name = pElement->GetName();
+	nxeInstance* inst = pBlock->CreateInstance(inst_name, cell);
+
+	const nxeStringList& nodenm_list = pElement->GetNodeNameList();
+	const nxeStringList& portnm_list = model->GetPortNameList();
+
+	nxeStringListIterator* nodenm_itr = nodenm_list.Iterator();
+	nxeStringListIterator* portnm_itr = portnm_list.Iterator();
+	while ((++ (*portnm_itr)) && (++ (*nodenm_itr))) {
+		const char* portnm = portnm_itr->Get();
+		nxePin* pin = inst->CreatePin(portnm);
+
+		const char* nodenm = nodenm_itr->Get();
+		nxeNet* net = pBlock->CreateNet(nodenm);
+
+		pin->Connect(net);
+	}
+
+	delete nodenm_itr;
+	delete portnm_itr;
 }
 
 

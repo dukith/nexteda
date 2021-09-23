@@ -20,11 +20,6 @@
 #include <string.h>
 #include <new>
 
-#ifdef L_NXE_VERSION
-#undef L_NXE_VERSION
-#endif /* #ifdef L_NXE_VERSION */
-#define L_NXE_VERSION 10000 // V01.00.00
-
 #if defined(WIN32) || defined(_WIN32) || defined(WINCE)
 #define L_WINDOWS_OS_
 #elif defined(__FreeBSD__)
@@ -163,6 +158,13 @@ enum nxeDeviceType {
 	LnxeDeviceType_PNP = 6,
 	LnxeDeviceType_PMOS = 7,
 	LnxeDeviceType_NMOS = 8
+};
+
+//! Know-How Model type
+enum nxeKHModelType {
+	LnxeKHModelType_None = 0,
+	LnxeKHModelType_DefinedPattern = 1,
+	LnxeKHModelType_Cell = 2  
 };
 
 

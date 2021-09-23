@@ -20,6 +20,7 @@
 class nxeInstance;
 class nxeCircuit;
 class nxePinPairList;
+class nxeSchFixSolution;
 class nxeMatchingPattern;
 class nxeIFindPatternListener;
 class nxeICheckCircuitListener;
@@ -33,6 +34,12 @@ public:
 
 	//! Destructor
 	virtual ~nxeSchDesigner() {};
+
+	//! Circuit
+	virtual const nxeCircuit& GetCircuit() const = 0;
+
+	//! Circuit
+	virtual nxeCircuit& GetCircuit() = 0;
 
 	//! Learn
 	virtual void LearnShematic() = 0;
@@ -84,12 +91,25 @@ public:
 	virtual ~nxeICheckCircuitListener() {};
 
 	/*!
+	 * \brief If circuit is no problem then this event will be activated (Can be multiple times)
+	 *
+	 * \param pPattern (o) Found matching pattern
+	 */
+	virtual void OnMatch(const nxeMatchingPattern& pPattern) = 0;
+
+	/*!
 	 * \brief Append pair
 	 *
-	 * \param pCurrConnList (o) Pairs of pins in current connection that maybe mistake
-	 * \param pSuggestConnList (o) Solution to fix mistake in pCurrConnList
+	 * \param pFixSolution (o) Fix solution
 	 */
-	virtual void OnSuggestFix(const nxePinPairList& pCurrConnList, const nxePinPairList& pSuggestConnList) = 0;
+	virtual void OnSuggestFix(const nxeSchFixSolution& pFixSolution) = 0;
+
+	/**
+	 * \brief The event activated in case of being not enough data to evaluate input
+	 * 
+	 */
+	virtual void OnNotEnoughDataToEvaluate() = 0;
+
 };
 
 

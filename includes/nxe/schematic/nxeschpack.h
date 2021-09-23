@@ -14,7 +14,10 @@
 #ifndef Lnxe_SCHPACK_H_
 #define Lnxe_SCHPACK_H_
 
+
 #include "nxecircuit.h"
 #include "nxeschdesigner.h"
+#include "nxeschfixsolution.h"
+
 
 #endif /* #ifndef Lnxe_SCHPACK_H_*/

@@ -39,6 +39,9 @@ public:
 	//! Set view name
 	virtual void SetViewName(const char* pViewnm) = 0;
 
+	//! Title
+	virtual const char* GetTitle() const = 0;
+
 	//! Get top model
 	virtual nxePSpcModel* GetTopModel() const = 0;
 

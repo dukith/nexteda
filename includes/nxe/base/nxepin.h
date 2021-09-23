@@ -41,6 +41,9 @@ public:
 	//! Get net
 	virtual nxeNet* GetNet() const = 0;
 
+	//! Connect
+	virtual void Connect(nxeNet* pNet) = 0;
+
 };
 
 #endif /* #ifndef LnxePIN_H_ */

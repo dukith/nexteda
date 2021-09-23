@@ -26,7 +26,13 @@ public:
 	//! Destructor
 	virtual ~nxeUtil() {};
 
-	//! Copy string
+	/**
+	 * \brief Copy string
+	 *
+	 * \param pSrcStr (i) Input string
+	 * \param pDestStr (o) Output string
+	 *                    Memory allocated for this string should be deallocated by caller (using free() function)
+	 */
 	virtual void CopyString(const char* pSrcStr, char*& pDestStr) = 0;
 
 	/**
@@ -40,13 +46,35 @@ public:
 
 	/**
 	 * \brief Trim space from string
+	 * 
+	 * \param pStr (i) Input string
+	 * \param pOutStr (o) Output string
+	 *                    Memory allocated for this string should be deallocated by caller (using free() function)
 	 */
-	virtual void TrimString(const char* pStr, char* pOutStr) = 0;
+	virtual void TrimString(const char* pStr, char*& pOutStr) = 0;
+
+	/**
+	 * \brief Trim space from string
+	 *
+	 * \param pStr (io) Input/output string
+	 */
+	virtual void TrimString(char* pStr) = 0;
 
 	/**
 	 * \brief To upper
+	 *
+	 * \param pStr (i) Input string
+	 * \param pOutStr (o) Output string
+	 *                    Memory allocated for this string should be deallocated by caller (using free() function)
 	 */
-	virtual void ToUpper(const char* pStr, char* pOutStr) = 0;
+	virtual void ToUpper(const char* pStr, char*& pOutStr) = 0;
+
+	/**
+	 * \brief To upper
+	 *
+	 * \param pStr (i) Input/Output string
+	 */
+	virtual void ToUpper(char* pStr) = 0;
 
 	/**
 	 * \brief Print into string
@@ -60,6 +88,10 @@ public:
 
 	/**
 	 * \brief Get real path
+	 *
+	 * \param pPath (i) Input path
+	 * \param pRealPath (o) Output path
+	 *                    Memory allocated for this string should be deallocated by caller (using free() function)
 	 */
 	virtual void GetRealPath(const char* pPath, char*& pRealPath) = 0;
 
@@ -70,6 +102,8 @@ public:
 
 	/**
 	 * \brief Get pspice loader
+	 * 
+	 * \return PSpice loader. This variable should be deleted by caller using delete() function.
 	 */
 	virtual nxePSpcLoader* CreatePSpiceLoader() = 0;
 
