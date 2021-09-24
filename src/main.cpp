@@ -248,6 +248,8 @@ void ListModel(nxeSchDesigner& pDesigner) {
 		printf("%d\t%.15s\t\t\t%.15s\t\t%.40s\n", (++ cnt), model_name, type_name, desc);
 	}
 
+	delete model_itr;
+
 	ConfirmToContinue();
 }
 
