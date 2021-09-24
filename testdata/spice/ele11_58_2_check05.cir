@@ -1,0 +1,28 @@
+Current mirror sample
+mpmos1 net01 net01 net_11 vdd PMOS L=1.5u W=4u
+mpmos2 net02 net01 net21 vdd PMOS L=1.5u W=4u
+
+m11 net_11 vdd net12 vdd PMOS
+m12 net12 vdd net13 vdd PMOS
+m13 net13 vdd net14 vdd PMOS
+m14 net14 vdd vdd vdd PMOS
+m21 net21 vdd net22 vdd PMOS
+m22 net22 vdd net23 vdd PMOS
+m23 net23 vdd net24 vdd PMOS
+m24 net24 vdd vdd vdd PMOS
+
+mpmos3 vout net02 vdd vdd PMOS L=1.5u W=4u
+mnmos1 net01 ground net04 ground NMOS L=1.5u W=4u
+mnmos2 net02 ground net04 ground NMOS L=1.5u W=4u
+mnmos3 net05 net05 ground ground NMOS L=1.5u W=4u
+mnmos4 net04 net05 ground ground NMOS L=1.5u W=4u
+mnmos5 vout net05 ground ground NMOS L=1.5u W=4u
+
+.MODEL PMOS pmos (VTO=-0.8V KP=5e-4 LAMBDA=0.01)
+
+.MODEL NMOS nmos (VTO=-0.8V KP=5e-4 LAMBDA=0.01)
+
+.AC dec 10 .01 10
+.DC vs 0 5 0.05
+.PROBE
+.END
