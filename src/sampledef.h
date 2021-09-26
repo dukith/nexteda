@@ -29,7 +29,7 @@
 #define L_USRCMD_QUIT "Q"
 
 #define L_CommandHint "\
-NextEDA API Version %s.\n\
+NextEDA API Version %s - Schematic Learning\n\
 Copyright (c) 2018 NextEDA Project Team. All rights reserved.\n\
 ============================================================\n\
 Choose a command in following: \n\

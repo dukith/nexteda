@@ -6,9 +6,9 @@ SAMPLE_HOME = ../../..
 SRC_FILE_PATH = $(SAMPLE_HOME)/src
 
 CFLAGS = -m64 -O2 -c -Wall -fmessage-length=0 -I$(SAMPLE_HOME)/includes
-LDFLAGS = -ldl 
+LDFLAGS = -lexecinfo -ldl 
 
-include $(SRC_FILE_PATH)/sources.txt
+SOURCES != find $(SRC_FILE_PATH) -type f -name '*.cpp'
 OBJS = $(SOURCES:.cpp=.o)
 
 EXEC = sample.exe

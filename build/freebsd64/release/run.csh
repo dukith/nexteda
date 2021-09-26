@@ -8,6 +8,6 @@ if (! $?LD_LIBRARY_PATH) then
 endif
 
 setenv NXE_LIB_PATH ${CURR_DIR}/../../../
-setenv LD_LIBRARY_PATH ${CURR_DIR}/../../../lib/rhel64/:${LD_LIBRARY_PATH}
+setenv LD_LIBRARY_PATH ${NXE_LIB_PATH}/lib/freebsd64/:${LD_LIBRARY_PATH}
 
 ${CURR_DIR}/sample.exe ${CURR_DIR}/../../../testdata/nxe/nxe.ini

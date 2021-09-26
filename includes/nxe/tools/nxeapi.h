@@ -177,9 +177,7 @@ protected:
 		strcat_s(buffer, cwd);
 #else
 		char buffer[Lnxe_PATH_MAXLEN] = "LD_LIBRARY_PATH=";
-		//char fullpath[Lnxe_PATH_MAXLEN] = "";
 		strcat(buffer, cwd);
-		//strcat(fullpath, cwd);
 #endif
 
 #ifdef L_WINDOWS_OS_
@@ -193,10 +191,6 @@ protected:
 			strcat(buffer, ":${LD_LIBRARY_PATH}");
 		}
 		putenv(buffer);
-
-		//(fullpath, Lnxe_LIB_PATH);
-		//strcat(fullpath, mLibName);
-		//strcpy(mLibName, fullpath);
 #endif
 	}
 
@@ -304,13 +298,6 @@ protected:
 	}
 
 private:
-	//! NXE I/F
-	NXEStartIF ifStart;
-	NXEEndIF ifEnd;
-	NXESchDesignerIF ifDesigner;
-	NXEUtilIF ifUtil;
-
-private:
 	//! Library name (File full path of dll or *.so, etc...)
 	char* mLibName;
 
@@ -319,6 +306,13 @@ private:
 
 	//! Version text
 	char* mVerText;
+
+	//! NXE I/F
+	NXEStartIF ifStart;
+	NXEEndIF ifEnd;
+	NXESchDesignerIF ifDesigner;
+	NXEUtilIF ifUtil;
+
 };
 
 template <class DUMMY>

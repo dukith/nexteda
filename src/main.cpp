@@ -110,6 +110,7 @@ UserCommandType ReadCommand() {
 	else {
 		printf("Unknown command. (%s)", cmd);
 		ConfirmToContinue();
+		return L_UserCommand_None;
 	} 
 
 	return L_UserCommand_Quit;
