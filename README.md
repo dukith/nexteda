@@ -1,2 +1,2 @@
 # nexteda
-AI library for EDA applications
+Machine learning API for EDA applications
