@@ -1,4 +1,4 @@
 # nexteda
 Machine learning API for EDA applications
 
-See the manual for QuickStart in Wiki.
+See the QuickStart for details. (Wiki -> Quick Start)
