@@ -25,16 +25,15 @@ void ListModel(nxeSchDesigner& pDesigner);
 void ConfirmToContinue();
 
 int main(int argc, char ** argv) {
-	if (argc < 2) {
-		printf("Command syntax error. Please input configuration file.\n");
-		return 0;
-	}
-
 	// Initialize designer
-	char* ctrlfile = argv[argc - 1];
 	try {
 		printf("Initializing...\n");
-		nxeAPI::Start(ctrlfile);
+		if (argc < 2) {
+			nxeAPI::Start("nxe.ini");
+		}
+		else {
+			nxeAPI::Start(argv[argc - 1]);
+		}
 	}
 	catch (nxeException& e) {
 		printf("%s\n", e.what());
@@ -259,4 +258,6 @@ void ConfirmToContinue() {
 	printf("Press any key to continue!");
 	fgets(dummy, Lnxe_PATH_MAXLEN, stdin);
 }
+
+
 

@@ -18,7 +18,7 @@
 #include "nxe/base/nxeexception.h"
 #include "nxe/base/nxeversion.h"
 
-#ifdef L_WINDOWS_OS_
+#if defined(L_WINDOWS_OS_) && defined(L_MSVC_C_)
 #include <windows.h>
 #include <direct.h>
 #define LIB_NAME_ANIF "anif.dll"
@@ -60,7 +60,9 @@ public:
 		mMyself = new nxeAPI();
 		mMyself->SetLibPath();
 		if (mMyself->Load() != 1) {
-			throw nxeException("Cannot load library. Please check 'lib' directory.", __FILE__, __LINE__);
+			char msg[Lnxe_PATH_MAXLEN];
+			snprintf(msg, Lnxe_PATH_MAXLEN, "Cannot load library from '%s'. Please check 'lib' directory.", mMyself->mLibPath);
+			throw nxeException(msg, __FILE__, __LINE__);
 		}
 
 		// Initialize designer
@@ -111,12 +113,12 @@ public:
 protected:
 	//! Constructor
 	nxeAPI(const char* pLibName = LIB_NAME_ANIF)
-		: mLibName(NULL), hLib(NULL), ifStart(NULL), ifEnd(NULL), ifDesigner(NULL), ifUtil(NULL), mVerText(NULL)
+		: mLibName(NULL), mLibPath(NULL), hLib(NULL), ifStart(NULL), ifEnd(NULL), ifDesigner(NULL), ifUtil(NULL), mVerText(NULL)
 	{
 		size_t len = M_STRLEN(pLibName);
-		mLibName = (char*)M_MALLOC(M_MAX(len, Lnxe_PATH_MAXLEN) + 1);
+		mLibName = (char*)M_MALLOC(len + 1);
 		if (mLibName == NULL) {
-			throw nxeException("Out of memory", __FILE__, __LINE__);
+			throw nxeOutOfMemoryException(__FILE__, __LINE__);
 		}
 
 		M_MEMCPY(mLibName, pLibName, len);
@@ -126,15 +128,19 @@ protected:
 	//! Destrutor
 	virtual ~nxeAPI() {
 		if (hLib) {
-#ifdef L_WINDOWS_OS_
+#if defined(L_WINDOWS_OS_) && defined(L_MSVC_C_)
 			FreeLibrary(hLib);
 #else
 			dlclose(hLib);
 #endif
 		}
 
-		if (mLibName != NULL) {
+		if (NULL != mLibName) {
 			M_FREE(mLibName);
+		}
+
+		if (NULL != mLibPath) {
+			M_FREE(mLibPath);
 		}
 
 		if (NULL != mVerText) {
@@ -169,28 +175,35 @@ protected:
 
 	//! Add path referred during searching library
 	void SetLibPath() {
-		char cwd[Lnxe_PATH_MAXLEN] = "";
-		CheckAndSetDefaultLibPath(cwd);
+		char lib_base_path[Lnxe_PATH_MAXLEN] = "";
+		CheckAndSetDefaultLibPath(lib_base_path);
 
-#ifdef L_WINDOWS_OS_
-		char buffer[Lnxe_PATH_MAXLEN] = "PATH=";
-		strcat_s(buffer, cwd);
-#else
-		char buffer[Lnxe_PATH_MAXLEN] = "LD_LIBRARY_PATH=";
-		strcat(buffer, cwd);
-#endif
+		// Set path to mLibPath
+		size_t base_len = M_STRLEN(lib_base_path);
+		size_t ext_len = M_STRLEN(Lnxe_LIB_PATH);
+		mLibPath = (char*)M_MALLOC(base_len + ext_len + 1);
+		if (NULL != mLibPath) {
+			M_MEMCPY(mLibPath, lib_base_path, base_len);
+			M_MEMCPY(mLibPath + base_len, Lnxe_LIB_PATH, ext_len);
+			mLibPath[base_len + ext_len] = '\0';
+		}
+		else {
+			throw nxeOutOfMemoryException(__FILE__, __LINE__);
+		}
 
-#ifdef L_WINDOWS_OS_
-		strcat_s(buffer, Lnxe_LIB_PATH);
+		// Set enviroment vairable PATH (for Windows) or LD_LIBRARY_PATH (for Linux/Unix)
+		char buffer[Lnxe_PATH_MAXLEN] = "";
+#if defined(L_WINDOWS_OS_) && defined(L_MSVC_C_)
+		strcat_s(buffer, mLibPath);
 		strcat_s(buffer, ";%PATH%");
-		_putenv(buffer);
+		_putenv_s("PATH", buffer);
 #else
-		strcat(buffer, Lnxe_LIB_PATH);
+		strcat(buffer, mLibPath);
 		char* cur_libpath = getenv("LD_LIBRARY_PATH");
 		if (cur_libpath != NULL && M_STRLEN(cur_libpath) > 0) {
 			strcat(buffer, ":${LD_LIBRARY_PATH}");
 		}
-		putenv(buffer);
+		setenv("LD_LIBRARY_PATH", buffer, 1);
 #endif
 	}
 
@@ -199,7 +212,7 @@ protected:
 	 */
 	void CheckAndSetDefaultLibPath(char* pLibPath) {
 		// Get path from enviroment variable
-#ifdef L_WINDOWS_OS_
+#if defined(L_WINDOWS_OS_) && defined(L_MSVC_C_)
 		char* envvar_val = NULL;
 		size_t len;
 		errno_t err = _dupenv_s(&envvar_val, &len, Lnxe_LIBPATH_VARNAME);
@@ -211,26 +224,67 @@ protected:
 #endif
 
 		if (NULL != envvar_val && strlen(envvar_val) > 0) {
-#ifdef L_WINDOWS_OS_
+#if defined(L_WINDOWS_OS_) && defined(L_MSVC_C_)
 			strncpy_s(pLibPath, Lnxe_PATH_MAXLEN, envvar_val, strlen(envvar_val));
 #else
 			strncpy(pLibPath, envvar_val, strlen(envvar_val));
 #endif
-
 		}
 		else {
-#ifdef L_WINDOWS_OS_
-			_getcwd(pLibPath, sizeof(pLibPath));
-#else
-			getcwd(pLibPath, sizeof(pLibPath));
-#endif
+			SetLibPathFromExecPath(pLibPath);
 		}
 
-#ifdef L_WINDOWS_OS_
+#if defined(L_WINDOWS_OS_) && defined(L_MSVC_C_)
 		if (NULL != envvar_val) {
 			free(envvar_val);
 		}
 #endif
+	}
+
+	void SetLibPathFromExecPath(char* pLibPath) {
+		char exec_file_path[Lnxe_PATH_MAXLEN];
+
+#if defined(L_WINDOWS_OS_) && defined(L_MSVC_C_)
+		int bytes = GetModuleFileName(NULL, exec_file_path, Lnxe_PATH_MAXLEN);
+		if (0 == bytes) {
+			return;
+		}
+#else
+		char szTmp[32];
+		sprintf(szTmp, "/proc/%d/exe", getpid());
+		int bytes = MIN(readlink(szTmp, exec_file_path, Lnxe_PATH_MAXLEN), Lnxe_PATH_MAXLEN - 1);
+		if (bytes >= 0) {
+			exec_file_path[bytes] = '\0';
+		}
+		else {
+			return;
+		}
+#endif
+
+		// Separate directory and file from full path
+		const char* last_slash1 = strrchr(exec_file_path, '\\');
+		const char* last_slash2 = strrchr(exec_file_path, '/');
+		const char* last_slash = NULL;
+		if (NULL == last_slash1 && NULL == last_slash2) {
+			return;
+		}
+		else if (NULL == last_slash1) {
+			last_slash = last_slash2;
+		}
+		else if (NULL == last_slash2) {
+			last_slash = last_slash1;
+		}
+		else {
+			last_slash = (last_slash1 < last_slash2) ? last_slash2 : last_slash1;
+		}
+
+		size_t path_len = M_STRLEN(exec_file_path);
+		size_t filenm_len = M_STRLEN(last_slash);
+		size_t app_path_len = path_len - filenm_len;
+
+		// Set to lib path
+		M_MEMCPY(pLibPath, exec_file_path, app_path_len);
+		pLibPath[app_path_len] = '\0';
 	}
 
 	/**
@@ -244,7 +298,7 @@ protected:
 			return 1;
 		}
 
-#ifdef L_WINDOWS_OS_
+#if defined(L_WINDOWS_OS_) && defined(L_MSVC_C_)
 		hLib = LoadLibrary(mLibName);
 #else
 		hLib = dlopen(mLibName, RTLD_LAZY | RTLD_GLOBAL);
@@ -261,7 +315,7 @@ protected:
 	 * \brief Load function
 	 */
 	FUNC_HANDLE GetFunc(const char* pFuncName) {
-#ifdef L_WINDOWS_OS_
+#if defined(L_WINDOWS_OS_) && defined(L_MSVC_C_)
 		return GetProcAddress(hLib, pFuncName);
 #else
 		return dlsym(hLib, pFuncName);
@@ -300,6 +354,7 @@ protected:
 private:
 	//! Library name (File full path of dll or *.so, etc...)
 	char* mLibName;
+	char* mLibPath;
 
 	//! Library handler
 	LIB_HANDLE hLib;
