@@ -6,7 +6,7 @@ For inquiries, please contact the following e-mail address.
 &nbsp;&nbsp;support@nexteda.com
 <br/>
 
-# Confirmed operation platforms
+# Tested platforms
 <br/>&nbsp;&nbsp;Red Hat Enterprise Linux 7 (64bit)
 <br/>&nbsp;&nbsp;FreeBSD 12 (64bit)
 <br/>&nbsp;&nbsp;Windows 10 (64bit)
