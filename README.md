@@ -1,5 +1,5 @@
-# nexteda
-Machine learning API for EDA applications
+# NextEDA
+Machine learning API for EDA applications.
 
 # Quick Starts
 See the QuickStarts for details. (Wiki -> Quick Start)
