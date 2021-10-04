@@ -1,5 +1,7 @@
 # NextEDA
 Machine learning API for EDA applications.
+For inquiries, please contact the following e-mail address.
+　　support@nexteda.com
 
 # Quick Starts
 See the "Wiki -> Quick Start" for details.
