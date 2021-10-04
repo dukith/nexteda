@@ -16,6 +16,6 @@ For inquiries, please contact the following e-mail address.
 See the "Wiki -> Quick Starts" for details.
 
 # Executable modules
-[Executable module for Windows 64bit](../../wiki/release/sample_win64_20211003.zip "Executable module for Windows 64bit")
+[Module for Windows 64bit](../../wiki/release/sample_win64_20211003.zip "Module for Windows 64bit")
 <br/>
-[Executable module for Windows 32bit](../../wiki/release/sample_win32_20211003.zip "Executable module for Windows 32bit")
+[Module for Windows 32bit](../../wiki/release/sample_win32_20211003.zip "Module for Windows 32bit")
