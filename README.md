@@ -13,7 +13,7 @@ For inquiries, please contact the following e-mail address.
 <br/>&nbsp;&nbsp;Windows 10 (32bit)
 
 # Quick Starts
-See the "Wiki -> Quick Start" for details.
+See the "Wiki -> Quick Starts" for details.
 
 # Executable modules
 [Executable module for Windows 64bit](../../wiki/release/sample_win64_20211003.zip "Executable module for Windows 64bit")
