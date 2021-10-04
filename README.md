@@ -1,4 +1,9 @@
 # nexteda
 Machine learning API for EDA applications
 
-See the QuickStart for details. (Wiki -> Quick Start)
+# Quick Starts
+See the QuickStarts for details. (Wiki -> Quick Start)
+
+# Executable modules
+[Executable module for Windows 64bit](release/sample_win64_20211003.zip "Executable module for Windows 64bit")
+[Executable module for Windows 32bit](release/sample_win32_20211003.zip "Executable module for Windows 32bit")
